@@ -18,22 +18,3 @@ public:
 
 	friend class Tree;
 };
-
-
-//#pragma once
-//#include <iostream>
-//#include <string>
-//#include <list>
-//using namespace std;
-//
-//class Node
-//{
-//public:
-//	string content; 
-//	list<Node*> responses;
-//	bool isLeaf;
-//	Node(string str) { isLeaf = true; content = str; } // constructor
-//
-//	friend class DiscussionTree;
-//};
-

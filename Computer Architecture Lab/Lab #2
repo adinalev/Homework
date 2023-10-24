@@ -1,0 +1,37 @@
+# We had a hard time understand what the question was asking for question 2. 
+# Therefore, we did a jump command so that we can jump easily from question to question.
+# To end each question we put a syscall at the end.
+
+j q1
+# Question 2
+# Question 1 of hw1
+q1:
+li $t0, 2 #load 2 to the register t0
+li $t1, 3 #load 3 to the register t1
+li $t2, 4 #load 4 to register t2
+add $v0, $t0, $t1 #2+3 stored in register v0
+add $v0, $v0, $t2 # 5+4 stored in resgister v0
+
+li $v0, 10
+syscall
+
+#Question 2 of hw1
+q2:
+addi $t0, $zero, 7 #load 7 to the register t0
+addi $t1, $zero, 1 #load 1 to the register t1
+sub $v0, $t0, $t1 #7 subtracted by 1, stored in register v0
+
+li $v0, 10
+syscall
+
+# Question 3
+q3:
+li $t1, 4
+li $t2, 3
+add $t1, $t1, $t2
+sub $t2, $t1, $t2
+sub $t1, $t1, $t2
+
+li $v0, 10
+syscall
+

@@ -1,0 +1,51 @@
+.text
+
+j q2
+
+q1:
+li $a0, 1
+li $a1, 2
+
+addi $v0, $a0, 0 #setting the sum equal to a0
+
+li $t0, 0 # counter for the loop
+li $t1, 9 # holder for the number 10 for the loop
+
+Loop:
+add $a0, $a0, $a1 # a0 += a1
+add $v0, $v0, $a0 # sum += a0
+addi $t0, $t0, 1 # increase the count
+bne $t0, $t1, Loop #loop it back until 10
+
+q2:
+li $a0, 5 #n
+li $a1, 2  #x
+
+Variables:
+li $t0, 1 #exp
+li $t1, 1 #prod
+li $t2, 0 #sum
+addi $t5, $a0, 1 # holder for a0 +1 for outer loop branch
+
+Counters:
+li $t3, 1 #outer loop
+li $t4, 1 #inner loop
+
+OuterLoop:
+
+beq $t3, 1, Continuation
+InnerLoop:
+mult $t0, $a1 # exp *= a1
+mflo $t0 # keep exp into t0
+addi $t4, $t4, 1 #increase the count
+bne $t4, $t3, InnerLoop # branch until it's equal to the counter of the outer loop
+
+Continuation:
+mult $t0, $t3 # exp * i
+mflo $t1 #prod = exp*i
+add $t2, $t2, $t1 # sum += $t2
+li $t0, 1 # exp =1
+li $t4, 1 #reset the inner loop count
+addi $t3, $t3, 1 # increase the count
+bne $t5, $t3, OuterLoop
+

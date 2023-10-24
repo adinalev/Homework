@@ -1,0 +1,219 @@
+.data
+str1:.asciiz "enter value: "
+str2: .asciiz "enter opcode: "
+str3:.asciiz "warning: overflow!"
+str4:.asciiz "Your number is: "
+str5:.asciiz "Would you like to continue?"
+str6:.asciiz "Yes"
+
+.text
+j question1
+
+question1:
+
+li $t0, '@' #storing the ascii value of the @ symbol
+li $t1, '+' #storing the ascii value of the + symbol
+li $t2, '-' #storing the ascii value of the - symbol
+li $t3, '*' #storing the ascii value of the * symbol
+li $s3, -1 # storing the value 1 to use for comparisons #MADE THIS -1
+
+OuterLoop:
+
+addi $sp, $sp, -4 # move the stack pointer down
+sw $ra, 0($sp) # store the $ra (location)
+la $a0, str1 #loading the address of str1
+
+li $v0, 51 # sending out the message to enter first value
+syscall
+addi $s0, $a0, 0 # store the user input into $s0
+
+la $a0, str2
+li $v0, 4
+syscall
+li $v0, 12 # to read in a character
+syscall # this is getting an error
+addi $s1, $v0, 0 # store the character input #CHANGED THIS FROM A0 -- MIGHT CAUSE ISSUE -- CHANGED FROM A1
+beq $s1, $t0, end # testing to see if what was inputted is =@ and if so, end the program
+
+Loop1:
+la $a0, str1 #loading the address of str1
+li $v0, 51
+syscall
+addi $s2, $a0, 0 # store the user input into $s2 CHANGED FROM S0
+#now we know we have two values so we can do the operation on them and store that number into the register then
+
+bne $s1, $t1, skipAdd #if the opcode is not + then skip addition
+jal addition
+skipAdd:
+bne $s1, $t2, skipSub #if the opcode is not - then skip subtractioin
+jal subtraction
+skipSub:
+bne $s1, $t3, skipMult # if the opcode is not * then skip multiplication
+jal multiplication 
+skipMult:
+la $a0, str2
+li $v0, 4
+syscall
+li $v0, 12 # to read in a character
+syscall # this is getting an error
+addi $s1, $v0, 0 # store the character input #CHANGED THIS FROM A0 -- MIGHT CAUSE ISSUE -- CHANGED FROM A1
+beq $s1, $t0, end
+bne $s1, $t0, Loop1 # testing to see if what was inputted is =@
+
+end:
+li $v0,1 #prepare system call 
+addi $a0, $s0, 0 #copy t0 to a0 
+syscall #print integer
+
+la $a0, str5 #loading address of str5
+li $v0, 50
+syscall
+beq $a0, $zero, OuterLoop # if the user wants to continue the program then it will run through the outer loop again
+
+li $v0, 10 # ending the program
+syscall
+
+addition:
+add $s0, $s0, $s2 # add the two numbers together
+jr $ra
+
+multiplication:
+mult $s0, $s2
+mflo $t4
+mfhi $t5
+beq $t5, $s3, continue1
+beq $t5, $zero continue1
+la $a0, str3 #loading the address of str3
+li $a1, 0 # sending out an error message
+li $v0, 55 # if there's overflow, send out a message
+syscall
+jr $ra # go back to the main function
+
+continue1:
+srl $t7, $t4, 31 # shift the mflo to the right 31 bits to get the MSB
+srl $t6, $t5, 31 # shift the mfhi to the right 31 bits to get the MSB
+beq $t6, $t7, continue2
+la $a0, str3 #loading the address of str3
+li $a1, 0 # sending out an error message
+li $v0, 55 # if there's overflow, send out a message
+syscall
+jr $ra # go back to the main function
+continue2:
+addi $s0, $t4, 0 # storing the end of the multiplication problem to $s0
+jr $ra
+
+subtraction:
+sub $s0, $s0, $s2 #subtract the two values
+jr $ra
+
+question2:
+
+.data
+str1:.asciiz "input a number: "
+str2:.asciiz "Original number in hex: "
+str3:.asciiz "Original number in binary: "
+str4:.asciiz "New number in hex: "
+str5:.asciiz "New number in binary: "
+str6:.asciiz "Warning: Illegal input!"
+
+.text
+li $t0, 31
+li $t1, 30
+li $t2, 48
+li $t3, 74
+li $t4, 99840 # to test option1
+
+addi $sp, $sp, -4 # move the stack pointer down
+sw $ra, 0($sp) # store the $ra (location)
+
+la $a0, str1 #loading the address of str1
+li $v0, 51 # sending out the message to input a number
+syscall
+addi $s0, $a0, 0 # store the user input into $s0
+srl $s1, $s0, 24 # shifting the inputted number 24 bits to the right so we can look at the top 8 bits
+sll $s2, $s0, 8 # shifting the inputted number 8 bits to the left *** probably don't need
+bne $s1, $t0, skipOption1 # if the number = 31
+jal option1
+skipOption1:
+bne $s1, $t1, skipOption2 # if the number = 30
+jal option2
+skipOption2:
+bne $s1, $t2, skipOption3 # if the number = 48
+jal option3
+skipOption3:
+bne $s1, $t3, skip4 # if the number = 74 #NEED TO CHANGE BACK TO TES
+jal option4
+
+skip4:
+beq $s1, $t0, end
+beq $s1, $t1, end
+beq $s1, $t2, end
+beq $s1, $t3, end
+
+la $a0, str6 #loading the address of str3
+li $a1, 0 # sending out an error message
+li $v0, 55 # if the inputted number doesn't equal any of the numbers then send out a warning message
+syscall
+
+li $v0, 10 # end the program early if there is a warning sent out
+syscall 
+
+end:
+la $a0, str2
+li $v0, 4 #printing original in hex
+syscall
+la $a0, 0($s0) # loading the original inputted value
+li $v0, 34 #printing is in hex
+syscall
+
+la $a0, str4
+li $v0, 4 #printing new number in hex
+syscall
+la $a0, 0($a1) # loading the original inputted value
+li $v0, 34 #printing it in hex
+syscall
+
+la $a0, str3
+li $v0, 4 #printing original in binry
+syscall
+la $a0, 0($s0) # loading the original inputted value
+li $v0, 35 #printing it in binary
+syscall
+
+la $a0, str5
+li $v0, 4 #printing new number in binary
+syscall
+la $a0, 0($a1) # loading the original inputted value
+li $v0, 35 #printing it in binary
+syscall
+
+li $v0, 10 # ending the program
+syscall
+
+
+option1:
+or $a1, $s0, $t4 # or this with 99840 in binary to get bits 0,1,6,7 of the leftmost bits = 1
+jr $ra
+
+option2:
+srl $a1, $s2, 8 # shift the righter portion that we saved earlier 8 bits to the right, and the leftmost bits will sign extend to 0
+jr $ra
+
+option3:
+sll $t5, $s0, 16 # first shift the input 16 to the left
+srl $t5, $t5, 24 # shift that to the right 24 to get bits 8-15
+xor $t5, $t5, $zero # flips the digits
+addi $t5, $t5, 1 # adding 1 to finish negating the number
+sll $t5, $t5, 8 # shift the obtained number 8 bits to the left
+or $a1, $s0, $t5 # or this with the inputted number so that bits 8-15 will be the desired bits
+jr $ra
+
+option4:
+sll $t6, $s0, 7 # shift the inputted number left by 7
+srl $t6, $t6, 27 # shift that number right by 27 to get bits 20-24
+sllv $a1, $s0, $t6 #Shift left logical variable : Set $a0 to result of shifting $s0 left by number of bits specified by value in low-order 5 bits of $t6
+jr $ra
+
+
+
+

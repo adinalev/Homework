@@ -1,0 +1,50 @@
+.data
+array:
+.word 14, 72, 8, 4, 0, 23, 19
+array_end: 
+size:
+
+.text
+
+li $t0, 1 # counter for Loop1
+li $t1, 2 # counter for Loop2
+li $t7, 1 # holder for a 1 to test the slt
+
+la $t2, array # loading the starting address of the array
+la $t3, array_end # loading the ending address of the array
+
+subi $t3, $t3, 4 #subtract the address of the end of the array by 4 to find the last place
+
+Loop1:
+Loop2:
+beq $t2, $t3, reset #originally was reset
+lw $t4, 0($t2) # load the contents of what's sitting in the start of the array
+lw $t5, 4($t2) # load the contents of what's sitting in the second place of the array
+slt $t6, $t5, $t4 # are the contents of $t5 less than the contents of $t4
+beq $t6, $t7, swap # if they're in decreasing order then swap the contents
+addi $t2, $t2, 4 # increasing the address of the array by 4
+bne $t6, $t7, Loop2 # if they're in non-descending order then do the inner loop again
+
+li $v0, 10
+syscall
+
+swap:
+sw $t5, 0($t2) # store the smaller value in the earlier address
+sw $t4, 4($t2) # store the larger value in the later address
+addi $t2, $t2, 4 # increasing the address of the array by 4
+bne $t2, $t3, Loop2 # if the address of the the next spot in the array is not equal to the address of the end of the array then do the inner loop again
+
+reset:
+la $t2, array # loading the starting address of the array
+mini_loop:
+lw $t4, 0($t2) # load the contents of what's sitting in the start of the array
+lw $t5, 4($t2) # load the contents of what's sitting in the second place of the array
+slt $t6, $t5, $t4 # are the contents of $t4 less than the contents of $t5 
+beq $t6, $t7, swap 
+beq $t4, $t5, final_check
+#beq $t6, $t7, Loop1
+final_check:
+bne $t2, $t3, end #CHNAGED FROM LOOP1 
+end:
+li $v0, 10
+syscall

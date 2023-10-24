@@ -1,0 +1,70 @@
+.data
+str1: .asciiz "input a number: "
+str2: .asciiz "the sequence was found"
+str3: .asciiz "the sequence was not found"
+
+block:.byte 1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9,1,2,3,4,-1
+input:.space 6 #la and then la+1...
+
+
+.text
+li $t0, 0 # counter
+li $t1, 6 # to store 6 for 6 inputted numbers
+li $t3, -1 # to signify the end of the block array
+
+la $s0, input # load the address of the input array
+inputLoop:
+la $a0, str1 #loading the address of str1
+li $v0, 51 # sending out the message to enter first value
+syscall
+sb $a0, 0($s0)
+addi $s0, $s0, 1 # increase the address of the array
+addi $t0, $t0, 1 # increase the count
+bne $t0, $t1, inputLoop
+
+# searching for the first number of the inputted array in the block array
+la $s0, input # load the address of the input array
+la $s2, block # load the address of the block array
+
+li $t2, 0 # count for the loop to see how many subsqeuent numbers are equal
+
+SearchLoop:
+lb $s1, 0($s0) # load the contents of the first spot in the input array
+lb $s3, 0($s2) # load the contents of the first spot in the block array
+#increment just the block address:
+#addi $s0, $s0, 1
+addi $s2, $s2, 1
+beq $s1, $s3, equal
+bne $s1, $s3, notEqual
+
+notEqual:
+li $t2, 0 # start the count over again
+beq $s3, $t3, notFound # if the second number is equal to -1, end the loop
+bne $t2, $t1, SearchLoop
+
+equal:
+addi $t2, $t2, 1 # increase the count
+addi $s0, $s0, 1 # increment the second array # ADDED THIS
+bne $t2, $t1, SearchLoop
+
+la $a0, str2 # loading the address of the "found" string
+li $v0, 4
+syscall
+
+li $v0, 10
+syscall
+
+notFound:
+la $a0, str3 # loading the address of the "not found" string
+li $v0, 4
+syscall
+
+li $v0, 10
+syscall
+
+
+
+
+
+
+

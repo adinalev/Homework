@@ -1,0 +1,190 @@
+# FOR DIVISION WE USE THE CEILING FUNCTION
+
+.data
+str1:.asciiz "enter value: "
+str2: .asciiz "enter opcode: "
+space: .asciiz "\n"
+str3:.asciiz "Warning: Illegal input!"
+
+.text
+li $t0, '@' #storing the ascii value of the @ symbol
+li $t1, '+' #storing the ascii value of the + symbol
+li $t2, '-' #storing the ascii value of the - symbol
+li $t3, '*' #storing the ascii value of the * symbol
+li $t5, 1
+li $t8, '^' #storing the ascii value of the ^ symbol
+li $t9, '/' #storing the ascii value of the / symbol
+
+la $a0, str1 #loading the address of str1
+li $v0, 51 # sending out the message to enter first value
+syscall
+addi $s0, $a0, 0 # store the user input into $s0
+
+la $a0, str2
+li $v0, 4
+syscall
+li $v0, 12 # to read in a character
+syscall # this is getting an error
+addi $s1, $v0, 0 # store the character input #CHANGED THIS FROM A0 -- MIGHT CAUSE ISSUE -- CHANGED FROM A1
+
+li $v0, 51 # sending out the message to enter second value
+syscall
+addi $s2, $a0, 0 # store the user input into $s0
+
+bne $s1, $t1, skipAdd #if the opcode is not + then skip addition
+jal addition
+skipAdd:
+bne $s1, $t2, skipSub #if the opcode is not - then skip subtractioin
+jal subtraction
+skipSub:
+bne $s1, $t3, skipMult # if the opcode is not * then skip multiplication
+jal multiplication 
+skipMult:
+bne $s1, $t8, skipExp # if the opcode is not ^ then skip exponent
+jal exponent
+skipExp:
+bne $s1, $t9, skipDiv # if the opcode is not / then skip division
+jal division
+skipDiv:
+
+#print out the answer of the operation
+addi $v0, $zero, 4  # print_string syscall
+la $a0, space       # load address of the string
+syscall
+
+li $v0,1 #prepare system call 
+addi $a0, $s0, 0 #copy t0 to a0 
+syscall #print integer
+
+li $v0, 10
+syscall
+
+addition: 
+add $s0, $s0, $s2 # add the two numbers together
+jr $ra
+
+multiplication: 
+addi $sp, $sp, -4 # move the stack pointer down
+sw $ra, 0($sp) # store the $ra (location)
+li $t4, 1 # counter for the loop
+
+# checking to see if either number is 0:
+beq $s0, $zero, endMult
+bne $s2, $zero, skipEndMult
+endMult:
+li $s0, 0 # product is = 0
+jr $ra
+
+skipEndMult:
+# checking to see if either number is negative:
+xor $t6, $s0, $s2 # xor both values entered to test if one of them is negative
+slti $t6, $t6, 0 # if t6 is 1 then that means it's negative and you have to flip the bits again at the end
+
+sra $t7, $s0, 31 # shift right arithmetic the first number by 31 bits
+xor $s0, $s0, $t7
+sub $s0, $s0, $t7 # now $s0 stores a positive version of the original $s0
+
+sra $t7, $s2, 31 # shift right arithmetic the second number by 31 bits
+xor $s2, $s2, $t7
+sub $s2, $s2, $t7 # now $s0 stores a positive version of the original $s2
+
+addi $s5, $s2, 0
+addi $s2, $s0, 0 # add the number by itself
+multLoop:
+jal addition
+addi $t4, $t4, 1 #increase the count by 1
+bne $t4, $s5, multLoop 
+bne $t6, $t5, skipMakeNeg
+
+# if either one of the original values was negative then we need to make the answer in $s0 negative
+nor $s0, $s0, $s0
+addi $s0, $s0, 1
+
+skipMakeNeg:
+lw $ra, 0($sp)
+addi $sp, $sp, 4
+jr $ra
+# our result is stored in $s0
+
+subtraction:
+addi $sp, $sp, -4 # move the stack pointer down
+sw $ra, 0($sp) # store the $ra (location)
+li $t4, 1 # counter for the loop
+# make $s2 negative
+nor $s2, $s2, $s2
+addi $s2, $s2, 1
+jal addition
+lw $ra, 0($sp)
+addi $sp, $sp, 4
+jr $ra
+
+exponent:
+addi $sp, $sp, -4 # move the stack pointer down
+sw $ra, 0($sp) # store the $ra (location)
+li $s3, 1 # counter for the loop
+
+addi $s4, $s2, 0 # store the second number into $s4
+
+addi $s2, $s0, 0
+expLoop:
+jal multiplication
+addi $s3, $s3, 1 #increase the count
+bne $s3, $s4, expLoop # if the count is not equal to the exponent then do the loop again
+lw $ra, 0($sp)
+addi $sp, $sp, 4
+jr $ra
+
+division:
+addi $sp, $sp, -4 # move the stack pointer down
+sw $ra, 0($sp) # store the $ra (location)
+li $s3, 0 # counter for the loop
+
+beq $s0, $zero, firstZero
+beq $s2, $zero, secondZero
+
+# checking to see if either number is negative:
+xor $t6, $s0, $s2 # xor both values entered to test if one of them is negative
+slti $t6, $t6, 0 # if t6 is 1 then that means it's negative and you have to flip the bits again at the end
+
+sra $t7, $s0, 31 # shift right arithmetic the first number by 31 bits
+xor $s0, $s0, $t7
+sub $s0, $s0, $t7 # now $s0 stores a positive version of the original $s0
+
+sra $t7, $s2, 31 # shift right arithmetic the second number by 31 bits
+xor $s2, $s2, $t7
+sub $s2, $s2, $t7 # now $s0 stores a positive version of the original $s2
+# end of this segment
+
+divLoop:
+jal subtraction
+#next two lines are to make it negative again bc it was made negative in the subtraction
+nor $s2, $s2, $s2
+addi $s2, $s2, 1
+addi $s3, $s3, 1 # increase the count
+beq $s0, $zero, endDiv
+slt $t7, $s0, $zero #checking if the result is less than 0
+bne $t5, $t7, divLoop # if $s0 is not less than 0
+
+endDiv:
+bne $t5, $t6, skipMakeNegDiv # if one of the original numbers was negative then make it negative
+#whatever is in the count (which is the answer) should be negative
+nor $s3, $s3, $s3
+addi $s3, $s3, 1
+skipMakeNegDiv:
+addi $s0, $s3, 0 #put the count into $s0
+lw $ra, 0($sp)
+addi $sp, $sp, 4
+jr $ra
+
+firstZero:
+# if the first inputted number is =0, then return a 0 value
+jr $ra
+
+secondZero:
+la $a0, str3 #loading the address of str3
+li $a1, 0 # sending out an error message
+li $v0, 55 # if the inputted number doesn't equal any of the numbers then send out a warning message
+syscall
+
+li $v0, 10 # end the program early if there is a warning sent out
+syscall 
